@@ -1,0 +1,14 @@
+all:
+  vars:
+    abc: def
+  children:
+    ungrouped:
+      hosts:
+        localhost:
+          vars:
+            hello: world
+    group1:
+      hosts:
+        example.com: {}
+      vars:
+        foobarbaz: 'no'

@@ -1,0 +1,30 @@
+- name: Run the task
+  async: 45 # timeout
+  poll: 0
+  loop: "{{ items }}"
+  loop_control:
+    loop_var: 'task_item'
+  register: async_results
+
+  ansible.builtin.uri:
+    url: "{{ endpoint }}/api/v1/item/{{ task_item.name }}" # with https://
+    method: POST
+    body_format: json
+    body:
+      ping: pong
+    headers:
+      Authorization: "Bearer {{ access_token }}"
+      Content-Type: application/json
+      Accept: application/json
+    status_code:
+      - 200
+
+- name: Wait on task
+  ansible.builtin.async_status:
+    jid: "{{ async_result.ansible_job_id }}"
+  loop: "{{ async_results.results }}"
+  loop_control:
+    loop_var: 'async_result'
+  register: async_status
+  until: async_status.finished
+  retries: 30

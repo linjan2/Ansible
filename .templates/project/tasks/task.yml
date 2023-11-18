@@ -1,0 +1,3 @@
+- name: Print parameter to stdout
+  ansible.builtin.debug:
+    msg: "{{ param }}"

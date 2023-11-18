@@ -1,0 +1,67 @@
+- name: Example playbook
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  become: false
+  vars:
+    env1: "{{ lookup('ansible.builtin.env', 'ENV1', default='') }}"
+    endpoint: "{{ lookup('ansible.builtin.env', 'ENDPOINT', default=Undefined) }}"
+    access_token: "{{ lookup('ansible.builtin.env', 'ACCESS_TOKEN', default=Undefined) }}"
+
+  module_defaults:
+    ansible.builtin.uri:
+      ca_path: "{{ lookup('ansible.builtin.env', 'CA_PATH', default=Undefined) }}"
+
+  pre_tasks:
+    - name: Check if ENDPOINT is defined
+      ansible.builtin.fail:
+        msg:
+          - "Missing environment variables"
+      when: endpoint is not defined or access_token is not defined
+    - name: Set inputs facts
+      ansible.builtin.set_fact:
+        async_inputs:
+          - '1'
+          - '2'
+          - '3'
+  roles:
+    - role: example
+      param: 'example role parameter'
+    # - role: example-async-batch
+    #   inputs: "{{ async_inputs }}"
+    #   batch_size: 2
+
+  tasks:
+
+    - name: hostvars
+      ansible.builtin.debug:
+        var: hostvars[inventory_hostname]
+        # verbosity: 1 # only run on -v
+      tags:
+        - debug
+
+    - name: Output variables
+      ansible.builtin.debug:
+        var: env1
+      tags:
+        - debug
+
+    - name: Print variables
+      ansible.builtin.include_tasks: tasks/task.yml
+      vars:
+        param: "{{ item }}"
+      loop: 
+        - foo
+        - bar
+        - "{{ endpoint }}"
+        - "{{ access_token }}"
+        - "{{ env1 | default(omit, True) }}" # default an empty string to an omit-token
+        - "{{ username }}"
+        - "{{ password }}"
+      tags:
+        - debug
+
+  post_tasks:
+    - name: Example post task
+      ansible.builtin.debug:
+        msg: 'Post task'

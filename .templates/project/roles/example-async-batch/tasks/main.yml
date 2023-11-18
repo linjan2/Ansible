@@ -1,0 +1,7 @@
+- name: Split input into multiple batches
+  include_tasks: task.yml
+  vars:
+    items: "{{ batch_item }}"
+  loop: "{{ inputs | batch(batch_size) | list }}"
+  loop_control:
+    loop_var: batch_item
