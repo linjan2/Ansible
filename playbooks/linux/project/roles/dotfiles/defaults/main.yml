@@ -1,0 +1,13 @@
+role_dotfiles_dir: "{{ role_dotfiles_dir_default }}"
+
+# role_dotfiles_podman_runroot: ''
+# role_dotfiles_podman_graphroot: ''
+# role_dotfiles_podman_tempdir: ''
+
+role_dotfiles_gitconfig_user: "{{ role_dotfiles_gitconfig_user_default }}"
+role_dotfiles_gitconfig_email: "{{ role_dotfiles_gitconfig_email_default }}"
+
+role_dotfiles_bashrc_PS1: "{{ role_dotfiles_bashrc_PS1_default }}"
+role_dotfiles_bashrc_env: "{{ role_dotfiles_bashrc_env_default }}"
+
+role_dotfiles_vimrc_autosave: "{{ role_dotfiles_vimrc_autosave_default }}"

@@ -1,0 +1,10 @@
+# {{ ansible_managed }}
+
+{% for key, val in role_dotfiles_bashrc_env.items() %}
+export {{ key }}='{{ val }}'
+{% endfor -%}
+
+alias ls='ls --color=auto -Ax --group-directories-first -1'
+alias cp='cp -v'
+alias rm='rm -Iv'
+export PS1='{{ role_dotfiles_bashrc_PS1 }}'

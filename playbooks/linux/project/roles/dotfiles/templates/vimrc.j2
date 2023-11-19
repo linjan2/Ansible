@@ -1,0 +1,39 @@
+" {{ ansible_managed }}
+
+set exrc      " also source .vimrc in current folder
+set mouse=    " disable mouse
+set list      " show listchars for tabs, trailing, nbsp
+set listchars=tab:>>,trail:-,nbsp:+  " characters to show for non-printables
+set number relativenumber  " hybrid line numbers (i.e. relative with current line as absolute)
+set ignorecase smartcase   " search case-insensitive except when any character is uppercase
+
+set tabstop=4 softtabstop=4 shiftwidth=4 expandtab smarttab  " use spaces instead of tabs
+set autoindent         " indent new line as previous line
+set formatoptions-=t   " don't auto-wrap text
+set formatoptions-=c   " don't auto-wrap comments
+set formatoptions-=r   " don't automatically insert comment leader on Enter
+set fileencodings=utf-8,latin1  " default file encodings
+set scrolloff=999      " keep cursor in the middle of the screen
+
+let g:netrw_banner = 0          " disable banner (toggle with I)
+let g:netrw_liststyle = 3       " display as tree
+let g:netrw_browse_split = 0    " reuse window when opening files (4 is reuse)
+let g:netrw_winsize = 20        " explorer window size percentage
+
+" remap shift+tab to de-indent in insert mode
+inoremap <S-Tab> <C-O><<
+
+{% if role_dotfiles_vimrc_autosave %}
+" auto-save files under home
+augroup AUTOSAVE
+    autocmd!
+    autocmd TextChanged,InsertLeave,FocusLost ~/* if &readonly == 0 && filereadable(bufname('%')) | silent update | endif
+augroup END
+
+" remove autosave if environment variable is set
+if $VIM_AUTOSAVE=="no"
+    au! AUTOSAVE
+endif
+{% endif -%}
+
+colorscheme slate

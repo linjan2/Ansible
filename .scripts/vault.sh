@@ -1,8 +1,10 @@
 set -o errexit
 set -o nounset
 
-# Create a vault file from a variables YAML file.
-# Encrypted variables are prefixed with 'vault_', and a vault.vars.yml maps the non-prefixed variables to these.
+# Create an encrypted vault file "vault" from input variables file, and also create "vault.vars.yml" with the vaulted variables safely visible.
+# Encrypted variables are prefixed with 'vault_', and the vault.vars.yml maps them to the non-prefixed variables specified in input variables file.
+# As specified at: https://docs.ansible.com/ansible/latest/tips_tricks/ansible_tips_tricks.html#keep-vaulted-variables-safely-visible
+# If vault password file if not specified then user is prompted for the vault password.
 function encrypt    # USAGE: encrypt vars.yml inventory/host_vars/localhost/ [password.txt]
 {
   VARS_FILE="${1}"
@@ -18,8 +20,7 @@ function encrypt    # USAGE: encrypt vars.yml inventory/host_vars/localhost/ [pa
   ansible-vault encrypt \
     --output "${VAULT_DIR}/vault" \
     ${PASSWORD_FILE:+--vault-password-file "${PASSWORD_FILE}"} \
-    /dev/fd/0
-
+    -
 }
 
 # decrypt a vault file

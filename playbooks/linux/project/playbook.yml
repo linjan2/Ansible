@@ -1,0 +1,50 @@
+- name: Example
+  hosts: group1
+  gather_facts: false
+  become: false
+
+  pre_tasks:
+
+    - name: hostvars
+      ansible.builtin.debug:
+        var: hostvars[inventory_hostname]
+        verbosity: 1 # only run on -v
+      tags:
+        - debug
+
+  roles:
+    - role: dotfiles
+      vars:
+        role_dotfiles_dir: '/tmp/test'
+        # role_dotfiles_podman_runroot: ''
+        # role_dotfiles_podman_graphroot: ''
+        # role_dotfiles_podman_tempdir: ''
+        role_dotfiles_gitconfig_user: 'Linda Jansson'
+        role_dotfiles_gitconfig_email: "{{ inventory_hostname }}@linda-jansson.lo"
+        role_dotfiles_bashrc_PS1: "{{ role_dotfiles_bashrc_PS1_default }}"
+        role_dotfiles_bashrc_env: "{{ role_dotfiles_bashrc_env_default }}"
+        role_dotfiles_vimrc_autosave: "{{ role_dotfiles_vimrc_autosave_default }}"
+      tags:
+        - never
+        - dotfiles
+  #   - role: bastion
+  #     tags:
+  #       - never
+  #       - prerequisites
+  #       - bastion
+  #   - role: quay-mirror
+  #     tags:
+  #       - never
+  #       - prerequisites
+  #       - quay-mirror
+  #   - role: kind
+  #     tags:
+  #       - never
+  #       - prerequisites
+  #       - kind
+
+  post_tasks:
+    - name: Output message
+      ansible.builtin.debug:
+        msg: 'Done'
+      ignore_errors: true

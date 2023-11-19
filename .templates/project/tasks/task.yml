@@ -1,3 +1,170 @@
 - name: Print parameter to stdout
   ansible.builtin.debug:
     msg: "{{ param }}"
+
+# - name: Attempt and graceful roll back demo
+#   block:
+#     - name: Do something
+#       ansible.builtin.shell: grep $(whoami) /etc/hosts
+#     - name: Force a failure, if previous one succeeds
+#       ansible.builtin.command: /bin/false
+#   rescue:
+#     - name: All is good if the first task failed
+#       when: ansible_failed_task.name == 'Do Something'
+#       ansible.builtin.debug:
+#         msg: All is good, ignore error as grep could not find 'me' in hosts
+
+#     - name: All is good if the first task failed
+#       when: "'/bin/false' in ansible_failed_result.cmd | d([])"
+#       ansible.builtin.fail:
+#         msg: It is still false!!!
+
+# ---
+
+#   tasks:
+
+#     - name: Block 1
+#       when: # there is no application client id, then begin initialization
+#         - client_id is not defined or client_id | length == 0
+#       block:
+#         - name: Create organization
+#           ansible.builtin.uri:
+#             url: "{{ quay_url }}/api/v1/organization/"
+#             ca_path: "{{ ca_path }}"
+#             method: POST
+#             body_format: json
+#             body:
+#               name: "{{ init_organization  }}"
+#             headers:
+#               Authorization: "Bearer {{ access_token }}"
+#               Accept: application/json
+#               Content-Type: application/json
+#             follow_redirects: none
+#             status_code: 201
+
+#         - name: Create application
+#           ansible.builtin.uri:
+#             url: "{{ quay_url }}/api/v1/organization/{{ init_organization }}/applications"
+#             ca_path: "{{ ca_path }}"
+#             method: POST
+#             body_format: json
+#             body:
+#               name: "{{ init_application  }}"
+#             headers:
+#               Authorization: "Bearer {{ access_token }}"
+#               Accept: application/json
+#               Content-Type: application/json
+#             follow_redirects: none
+#             status_code: 200
+#             return_content: true
+#           register: application
+
+#         - name: Set new client id variable
+#           ansible.builtin.set_fact:
+#             new_client_id: "{{ application.json.client_id }}"
+        
+#         - name: Check that new client ID is set
+#           ansible.builtin.fail:
+#             msg: Client ID from application creation was not set
+#           when:
+#             - new_client_id is not defined or new_client_id | length == 0
+
+#         - name: Get OAuth token
+#           vars:
+#             response_type: token
+#             scope: 'org:admin repo:admin repo:create repo:read repo:write super:user user:admin user:read'
+#             redirect_uri: "{{ quay_url }}/oauth/localapp"
+#             urlparams: "response_type={{ response_type | urlencode }}&client_id={{ new_client_id | urlencode }}&scope={{ scope | urlencode }}&redirect_uri={{ redirect_uri | urlencode }}"
+#           block:
+#             - name: Authorize
+#               ansible.builtin.uri:
+#                 url: "{{ quay_url }}/oauth/authorize?{{ urlparams }}"
+#                 ca_path: "{{ ca_path }}"
+#                 user: "{{ quayadmin_username }}"
+#                 password: "{{ quayadmin_password }}"
+#                 method: GET
+#                 force_basic_auth: true
+#                 follow_redirects: none
+#                 status_code: 200
+#                 return_content: true
+#               register: oauth_authorize
+#               failed_when: "'window.__token' not in oauth_authorize.content"
+
+#             - name: Get window token from HTML
+#               ansible.builtin.set_fact:
+#                 _csrf_token: "{{ oauth_authorize.content | regex_search(\"(?<=window.__token = ').+(?=';)\") }}"
+            
+#             - name: Check that CSRF token is set
+#               ansible.builtin.fail:
+#                 msg: CSRF token was not set
+#               when:
+#                 - _csrf_token is not defined or _csrf_token | length == 0
+
+#             - name: Authorize application
+#               ansible.builtin.uri:
+#                 url: "{{ quay_url }}/oauth/authorizeapp"
+#                 ca_path: "{{ ca_path }}"
+#                 user: "{{ quayadmin_username }}"
+#                 password: "{{ quayadmin_password }}"
+#                 method: POST
+#                 headers:
+#                   Cookie: "{{ oauth_authorize.cookies_string }}"
+#                   Content-Type: application/x-www-form-urlencoded
+#                 body_format: form-urlencoded
+#                 body:
+#                   response_type: "{{ response_type  }}"
+#                   client_id: "{{ new_client_id  }}"
+#                   scope: "{{ scope  }}"
+#                   redirect_uri: "{{ redirect_uri  }}"
+#                   _csrf_token: "{{ _csrf_token }}"
+#                 force_basic_auth: true
+#                 follow_redirects: none
+#                 status_code: 302
+#               register: oauth_authorizeapp
+
+#             - name: Get access token from location header
+#               ansible.builtin.set_fact:
+#                 access_token: "{{ oauth_authorizeapp.location | regex_search('(?<=access_token=)[^&]+(?=&|$)') }}"
+
+#             - name: Check that access token is set
+#               ansible.builtin.fail:
+#                 msg: Access token was not set from location header
+#               when:
+#                 - access_token is not defined or access_token | length == 0
+
+#         # NOTE: can't override client_id until end of block since the block's when-condition is copied to each internal task and then lazily evaluated
+#         - name: Set client_id from new application
+#           ansible.builtin.set_fact:
+#             client_id: "{{ new_client_id }}"
+        
+#         - name: Check that client ID is set
+#           ansible.builtin.fail:
+#             msg: Client ID was not set
+#           when:
+#             - client_id is not defined or client_id | length == 0
+#         - name: Check that access token is set
+#           ansible.builtin.fail:
+#             msg: Access token was not set
+#           when:
+#             - access_token is not defined or access_token | length == 0
+        
+#         - name: Apply access token and client ID as Secret
+#           kubernetes.core.k8s:
+#             api_version: v1
+#             kind: Secret
+#             name: quay-access-token
+#             namespace: "{{ quay_namespace }}"
+#             state: present
+#             host: https://kubernetes.default.svc:443
+#             api_key: "{{ lookup('ansible.builtin.file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+#             ca_cert: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+#             apply: true
+#             resource_definition:
+#               apiVersion: v1
+#               kind: Secret
+#               metadata:
+#                 name: quay-access-token
+#                 namespace: "{{ quay_namespace }}"
+#               stringData:
+#                 QUAY_ACCESS_TOKEN: "{{ access_token }}"
+#                 QUAY_CLIENT_ID: "{{ client_id }}"

@@ -2,6 +2,6 @@
   include_tasks: task.yml
   vars:
     items: "{{ batch_item }}"
-  loop: "{{ inputs | batch(batch_size) | list }}"
+  loop: "{{ inputs | batch(role_example_async_batch_size) | list }}"
   loop_control:
     loop_var: batch_item

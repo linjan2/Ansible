@@ -1,0 +1,11 @@
+# {{ ansible_managed }}
+
+[user]
+    name = {{ role_dotfiles_gitconfig_user }}
+    email = {{ role_dotfiles_gitconfig_email }}
+[init]
+    defaultBranch = main
+[pull]
+    rebase = true
+[core]
+    excludesfile = ~/.gitignore

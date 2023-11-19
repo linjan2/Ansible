@@ -1,0 +1,16 @@
+role_dotfiles_dir_default: '~'
+
+role_dotfiles_gitconfig_user_default: "{{ inventory_hostname }}"
+role_dotfiles_gitconfig_email_default: "{{ inventory_hostname }}"
+
+role_dotfiles_bashrc_PS1_default: '\W > '
+role_dotfiles_bashrc_env_default:
+  PATH: >-
+    "/projects/.bin:$PATH"
+  HISTSIZE: 20000
+  HISTFILESIZE: 20000
+  HISTCONTROL: ignoredups
+  EDITOR: vi
+  KIND_EXPERIMENTAL_PROVIDER: podman
+
+role_dotfiles_vimrc_autosave_default: true

@@ -1,0 +1,28 @@
+- name: Template bashrc
+  ansible.builtin.template:
+    src: templates/bashrc.j2
+    dest: "{{ role_dotfiles_dir }}/.bashrc"
+
+- name: Create directory .config/containers
+  ansible.builtin.file:
+    path: "{{ role_dotfiles_dir }}/.config/containers"
+    state: directory
+    mode: '0755'
+- name: Template containers.conf
+  ansible.builtin.template:
+    src: templates/containers.conf.j2
+    dest: "{{ role_dotfiles_dir }}/.config/containers/containers.conf"
+- name: Template storage.conf
+  ansible.builtin.template:
+    src: templates/storage.conf.j2
+    dest: "{{ role_dotfiles_dir }}/.config/containers/storage.conf"
+
+- name: Template gitconfig
+  ansible.builtin.template:
+    src: templates/gitconfig.j2
+    dest: "{{ role_dotfiles_dir }}/.gitconfig"
+
+- name: Template vimrc
+  ansible.builtin.template:
+    src: templates/vimrc.j2
+    dest: "{{ role_dotfiles_dir }}/.vimrc"

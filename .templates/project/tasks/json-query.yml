@@ -1,0 +1,23 @@
+- name: search variable
+  vars:
+    json: "{{ lookup('ansible.builtin.file', 'people.json') }}"
+    # json: "{{ lookup('file', 'file.json') | ansible.builtin.from_json }}"
+    # query: "domain.server[?cluster=='cluster1'].port"
+    query: 'people[?age > `20`].[name, age]'
+    # query: 'people[*].name'
+    data:
+      people:
+        - age: 20
+          other: foo
+          name: Bob
+        - age: 25
+          other: bar
+          name: Fred
+        - age: 30
+          other: baz
+          name: George
+  ansible.builtin.debug:
+    # msg: "{{ json.people[0].name }}"
+    # msg: "{{ json }}"
+    var: item
+  loop: "{{ json | community.general.json_query(query) }}"

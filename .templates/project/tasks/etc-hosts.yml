@@ -1,0 +1,25 @@
+- name: Write inventory into hosts file
+  ansible.builtin.blockinfile:
+    # path: /etc/hosts
+    path: /tmp/hosts
+    # block: "{{ lookup('ansible.builtin.file', './local/hosts') }}"
+    block: |-
+      {% for item in groups['all'] %}
+      {{ hostvars[item]['ip'] }} {{ item }}.{{ domain_name }} {{ item }}
+      {% endfor %}
+    state: present
+    create: true
+    backup: true
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+  # when: populate_inventory_to_hosts_file
+
+# - name: Add mappings to /etc/hosts
+#   ansible.builtin.blockinfile:
+#     path: /etc/hosts
+#     block: |
+#       {{ item.ip }} {{ item.name }}
+#     marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
+#   loop:
+#     - { name: host1, ip: 10.10.1.10 }
+#     - { name: host2, ip: 10.10.1.11 }
+#     - { name: host3, ip: 10.10.1.12 }

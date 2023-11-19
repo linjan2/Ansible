@@ -1,0 +1,57 @@
+
+- name: Example uri request 2
+  vars:
+    response_type: token
+    scope: 'org:admin repo:admin repo:create repo:read repo:write super:user user:admin user:read'
+    redirect_uri: www.example.com/oauth/localapp
+    client_id: ABC123
+    urlparams: "?response_type={{ response_type | urlencode }}&client_id={{ new_client_id | urlencode }}&scope={{ scope | urlencode }}&redirect_uri={{ redirect_uri | urlencode }}"
+    username: user1
+    password: password1
+  block:
+    - name: POST
+      ansible.builtin.uri:
+        url: "https://www.example.com/api/v1/example{{ urlparams }}"
+        # ca_path: "{{ ca_path }}"
+        method: POST
+        body_format: json
+        body:
+          email: ''
+          access_token: true
+        headers:
+          Accept: application/json
+          Content-Type: application/json
+
+        user: "{{ username }}"
+        password: "{{ password }}"
+        force_basic_auth: true
+
+        follow_redirects: none
+        status_code: 200
+        return_content: true
+      register: example_response
+      failed_when: example_response.json.access_token is not defined
+
+    - name: Set access token
+      ansible.builtin.set_fact:
+        access_token: example_response.json.access_token
+
+    - name: Debug
+      ansible.builtin.debug:
+        var: access_token
+
+- name: Example uri request 2
+  ansible.builtin.uri:
+    url: "https://www.example.com/api/v1/"
+    method: POST
+    body_format: json
+    body:
+      abc: '123'
+      def: 'true'
+    headers:
+      Authorization: "Bearer {{ access_token }}"
+      Accept: application/json
+      Content-Type: application/json
+    status_code:
+      - 201
+      - 400

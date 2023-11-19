@@ -1,0 +1,8 @@
+# {{ ansible_managed }}
+
+{% if role_dotfiles_podman_tempdir is defined %}
+[storage]
+driver = "overlay"
+runroot = "{{ role_dotfiles_podman_runroot }}"
+graphroot = "{{ role_dotfiles_podman_graphroot }}"
+{% endif -%}

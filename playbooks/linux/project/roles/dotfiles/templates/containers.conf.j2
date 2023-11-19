@@ -1,0 +1,6 @@
+# {{ ansible_managed }}
+
+{% if role_dotfiles_podman_tempdir is defined %}
+[engine]
+env = ["TMPDIR={{ role_dotfiles_podman_tempdir }}"]
+{% endif -%}

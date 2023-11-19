@@ -1,0 +1,14 @@
+{% for key, val in template_input.items() %}
+- name: {{ key }}
+{% endfor -%}
+
+{% for key, val in template_input.items() %}
+{% for val_key, val_val in val.items() %}
+- name: {{ val_key }}
+  parent: {{ key }}
+  {% if val_val.extra is defined %}
+  extra: val_val.extra
+  {% endif -%}
+  tags: "{{ val_val.tags | default(omit) }}"
+{% endfor -%}
+{% endfor -%}

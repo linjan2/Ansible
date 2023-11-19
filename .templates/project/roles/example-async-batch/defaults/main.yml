@@ -1,1 +1,1 @@
-batch_size: 5
+role_example_async_batch_size: "{{ role_example_async_batch_size_default }}"

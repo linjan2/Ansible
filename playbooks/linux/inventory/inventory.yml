@@ -1,0 +1,8 @@
+all:
+  children:
+    ungrouped:
+      hosts:
+    group1:
+      hosts:
+        # ol.linda-jansson.lo:
+        localhost:

@@ -5,12 +5,21 @@
   become: false
   vars:
     env1: "{{ lookup('ansible.builtin.env', 'ENV1', default='') }}"
-    endpoint: "{{ lookup('ansible.builtin.env', 'ENDPOINT', default=Undefined) }}"
-    access_token: "{{ lookup('ansible.builtin.env', 'ACCESS_TOKEN', default=Undefined) }}"
+    endpoint: "{{ lookup('ansible.builtin.env', 'ENDPOINT', default=Undefined) }}" # fails if not set
+    access_token: "{{ lookup('ansible.builtin.env', 'ACCESS_TOKEN', default=Undefined) }}" # fails if not set
+
+    template_input:
+      A:
+        a1: 'a 1'
+        a2: 'a 2'
+        extra: '123'
+      B:
+        b1: 'b 1'
+        b2: 'b 2'
 
   module_defaults:
     ansible.builtin.uri:
-      ca_path: "{{ lookup('ansible.builtin.env', 'CA_PATH', default=Undefined) }}"
+      ca_path: "{{ lookup('ansible.builtin.env', 'CA_PATH', default='') | default(omit, true) }}"
 
   pre_tasks:
     - name: Check if ENDPOINT is defined
@@ -24,12 +33,23 @@
           - '1'
           - '2'
           - '3'
+    - name: Set inputs facts from template that generates YAML
+      ansible.builtin.set_fact:
+        variables: "{{ lookup('ansible.builtin.template', 'templates/variables.j2') | ansible.builtin.from_yaml }}"
+    - name: Debug
+      ansible.builtin.debug:
+        var: variables
+
   roles:
     - role: example
-      param: 'example role parameter'
+      vars:
+        role_example_input: 'example role parameter'
+      tags:
+        - test1
     # - role: example-async-batch
     #   inputs: "{{ async_inputs }}"
-    #   batch_size: 2
+    #   vars:
+    #     role_example_async_batch_size: 2
 
   tasks:
 
@@ -60,6 +80,17 @@
         - "{{ password }}"
       tags:
         - debug
+
+    - name: Run a task
+      ansible.builtin.import_tasks: tasks/json-query.yml
+      tags:
+        - never
+        - test # ansible-playbook --tags test project/playbook.yml
+    
+    - name: Jinja2 template
+      ansible.builtin.template:
+        src: templates/note.j2
+        dest: /tmp/note
 
   post_tasks:
     - name: Example post task
