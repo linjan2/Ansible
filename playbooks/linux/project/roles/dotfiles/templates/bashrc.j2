@@ -1,7 +1,7 @@
 # {{ ansible_managed }}
 
 {% for key, val in role_dotfiles_bashrc_env.items() %}
-export {{ key }}='{{ val }}'
+export {{ key }}={{ val }}
 {% endfor -%}
 
 alias ls='ls --color=auto -Ax --group-directories-first -1'
