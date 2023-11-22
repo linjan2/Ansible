@@ -1,0 +1,75 @@
+---
+- name: Gathering the package facts
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: Verify httpd existing
+  ansible.builtin.debug:
+    msg: "Failure the task when httpd package not installed(with protocol = http(s)), please install httpd and re-run the playbook."
+  failed_when:
+    - protocol == 'http' or protocol == 'https' 
+    - "'httpd' not in ansible_facts.packages"
+
+- name: Verify vsftpd existing
+  ansible.builtin.debug:
+    msg: "Failure the task when vsftpd package not installed(with protocol = ftp), please install vsftpd and re-run the playbook."
+  failed_when:
+    - protocol == 'ftp'
+    - "'vsftpd' not in ansible_facts.packages"
+
+- name: Make sure document root existing
+  ansible.builtin.file:
+    path: "{{ documentRoot }}"
+    state: directory
+
+- name: Make sure mountPath existing
+  ansible.builtin.file:
+    path: "{{ mountPath }}"
+    state: directory
+
+- name: Mount ISO read-only
+  ansible.posix.mount:
+    path: "{{ mountPath }}"
+    src: "{{ isoPath }}"
+    fstype: iso9660
+    opts: ro
+    state: mounted
+  when: source == 'iso'
+
+- name: Create subfolder under {{ protocol }} root path
+  file:
+    path: "{{ documentRoot }}/{{ relativePath }}"
+    state: directory
+    mode: 0755
+
+- name: Copy repo files
+  ansible.posix.synchronize:
+    src: "{{ mountPath }}/"
+    dest: "{{ documentRoot }}/{{ relativePath }}"
+    recursive: true
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Unmount ISO
+  ansible.posix.mount:
+    path: "{{ mountPath }}"
+    state: unmounted
+
+- name: Restart service httpd, in all cases
+  ansible.builtin.service:
+    name: httpd
+    state: restarted
+  when: protocol == 'http' or protocol == 'https'
+
+- name: Restart service vsftpd, in all cases
+  ansible.builtin.service:
+    name: vsftpd
+    state: restarted
+  when: protocol == 'ftp'
+
+- name: Apply httpd SELinux file context to filesystem
+  ansible.builtin.command: chcon -R -t httpd_sys_content_t "{{ documentRoot }}/{{ relativePath }}"
+  when: protocol == 'http' or protocol == 'https'
+
+- name: Apply vsftpd SELinux file context to filesystem
+  ansible.builtin.command: chcon -R -t httpd_sys_content_t "{{ documentRoot }}/{{ relativePath }}"
+  when: protocol == 'ftp'

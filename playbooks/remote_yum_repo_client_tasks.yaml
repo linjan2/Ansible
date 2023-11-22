@@ -1,0 +1,30 @@
+---
+- name: Add repositories for release >= RHEL-8.0
+  ansible.builtin.yum_repository:
+    file: "{{ repoName }}"
+    name: "{{ item.name }}"
+    description: "{{ item.description }}"
+    baseurl: "{{ item.baseurl }}"
+    gpgcheck: yes
+    enabled: yes
+    gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
+  loop:
+    - { name: "rhel-{{ release }}-for-x86_64-baseos-{{ protocol }}", description: "Red Hat Enterprise Linux $releasever - BaseOS - $basearch ({{ protocol }})", baseurl: "{{ protocol }}://{{ groups['server'][0] }}/{{ relativePath }}/BaseOS" }
+    - { name: "rhel-{{ release }}-for-x86_64-appstream-{{ protocol }}", description: "Red Hat Enterprise Linux $releasever - AppStream - $basearch ({{ protocol }})", baseurl: "{{ protocol }}://{{ groups['server'][0] }}/{{ relativePath }}/AppStream" }
+  when: release is version('8.0', '>=')
+
+- name: Add repositories for release < RHEL-8.0
+  ansible.builtin.yum_repository:
+    file: "{{ repoName }}"
+    name: "{{ item.name }}"
+    description: "{{ item.description }}"
+    baseurl: "{{ item.baseurl }}"
+    gpgcheck: yes
+    enabled: yes
+    gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
+  loop:
+    - { name: "rhel-{{ release }}-for-x86_64-baseos-{{ protocol }}", description: "Red Hat Enterprise Linux $releasever - OS - $basearch ({{ protocol }})", baseurl: "{{ protocol }}://{{ groups['server'][0] }}/{{ relativePath }}" }
+  when: release is version('8.0', '<')
+
+- name: Clean up cache
+  ansible.builtin.command: yum clean all

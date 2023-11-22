@@ -1,0 +1,30 @@
+---
+- name: Setup the remote yum repo server
+  become: yes
+  hosts: server
+  vars:
+    protocol: https
+    source: iso
+    documentRoot: /var/www/html/
+  tasks:
+
+  - include_tasks: remote_yum_repo_server_tasks.yaml
+    vars:
+      isoPath: /data/rhel-9.3-x86_64-dvd.iso
+      relativePath: RHEL-9.3/RedHatEnterpriseLinux/x86_64
+      mountPath: /mnt/RHEL-9.3/RedHatEnterpriseLinux/x86_64
+
+
+- name: Setup the remote yum repo client
+  become: yes
+  hosts: client
+  vars:
+    protocol: https
+  tasks:
+
+  - include_tasks: remote_yum_repo_client_tasks.yaml
+    vars:
+      release: 9.3
+      relativePath: RHEL-9.3/RedHatEnterpriseLinux/x86_64
+      repoName: remote_repo_{{ release }}-{{ protocol }}
+
