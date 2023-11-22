@@ -1,0 +1,69 @@
+---
+
+- name: Setup the local yum repo
+  become: yes
+  hosts: local_yum_repo_server
+  vars:
+    release: 9.3
+    source: dvd
+    isoPath: /data/rhel-9.3-x86_64-dvd.iso
+    mountPath: /mnt/RHEL9/dvd/
+    repoName: localrepo_RHEL9-9.3-dvd.repo
+  tasks:
+  - name: Umount the previous DVD device
+    ansible.posix.mount:
+      path: /dev/sr0
+      state: unmounted
+
+  - name: Make sure mountPath existing
+    ansible.builtin.file:
+      path: "{{ mountPath }}"
+      state: directory
+
+  - name: Mount DVD read-only
+    ansible.posix.mount:
+      path: "{{ mountPath }}"
+      src: /dev/sr0
+      fstype: iso9660
+      opts: ro
+      state: mounted
+    when: source == 'dvd'
+
+  - name: Mount ISO read-only
+    ansible.posix.mount:
+      path: "{{ mountPath }}"
+      src: "{{ isoPath }}"
+      fstype: iso9660
+      opts: ro
+      state: mounted
+    when: source == 'iso'
+
+  - name: Add repositories for release >= RHEL-8.0
+    ansible.builtin.yum_repository:
+      file: "{{ repoName }}"
+      name: "{{ item.name }}"
+      description: "{{ item.description }}"
+      baseurl: "{{ item.baseurl }}"
+      gpgcheck: yes
+      enabled: yes
+      gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
+    loop:
+      - { name: "rhel-{{ release }}-for-x86_64-baseos-{{ source }}", description: "Red Hat Enterprise Linux $releasever - BaseOS - $basearch ({{ source }})", baseurl: "file://{{ mountPath }}/BaseOS" }
+      - { name: "rhel-{{ release }}-for-x86_64-appstream-{{ source }}", description: "Red Hat Enterprise Linux $releasever - AppStream - $basearch ({{ source }})", baseurl: "file://{{ mountPath }}/AppStream" }
+    when: release is version('8.0', '>=')
+
+  - name: Add repositories for release < RHEL-8.0
+    ansible.builtin.yum_repository:
+      file: "{{ repoName }}"
+      name: "{{ item.name }}"
+      description: "{{ item.description }}"
+      baseurl: "{{ item.baseurl }}"
+      gpgcheck: yes
+      enabled: yes
+      gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
+    loop:
+      - { name: "rhel-{{ release }}-for-x86_64-{{ source }}", description: "Red Hat Enterprise Linux $releasever - OS - $basearch ({{ source }})", baseurl: "file://{{ mountPath }}" }
+    when: release is version('8.0', '<')  
+
+  - name: Clean up cache
+    ansible.builtin.command: yum clean all
